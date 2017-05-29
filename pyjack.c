@@ -1071,6 +1071,32 @@ static PyObject* get_current_transport_frame(PyObject* self, PyObject* args)
     return Py_BuildValue("i", ftr);
 }
 
+static PyObject* get_beat_infos(PyObject* self, PyObject* args)
+{
+    pyjack_client_t * client = self_or_global_client(self);
+    if(client->pjc == NULL) {
+        PyErr_SetString(JackNotConnectedError, "Jack connection has not yet been established.");
+        return NULL;
+    }
+
+
+    PyObject* d;
+    d = PyDict_New();
+    if(d == NULL) return NULL;
+
+    jack_position_t transport_infos;
+
+    jack_transport_query(client->pjc, &transport_infos);
+
+    PyDict_SetItemString(d, "bar", Py_BuildValue("i", transport_infos.bar));
+    PyDict_SetItemString(d, "beat", Py_BuildValue("i", transport_infos.beat));
+    PyDict_SetItemString(d, "beats_per_bar", Py_BuildValue("f", transport_infos.beats_per_bar));
+    PyDict_SetItemString(d, "beat_type", Py_BuildValue("f", transport_infos.beat_type));
+    PyDict_SetItemString(d, "beats_per_minute", Py_BuildValue("f", transport_infos.beats_per_minute));
+
+    return d;
+}
+
 static PyObject* transport_locate (PyObject* self, PyObject* args)
 {
     pyjack_client_t * client = self_or_global_client(self);
@@ -1383,6 +1409,7 @@ static PyMethodDef pyjack_methods[] = {
   {"check_events",       check_events,            METH_VARARGS, "check_events():\n  Check for event notifications"},
   {"get_frame_time",     get_frame_time,          METH_VARARGS, "get_frame_time():\n  Returns the current frame time"},
   {"get_current_transport_frame", get_current_transport_frame,  METH_VARARGS, "get_current_transport_frame():\n  Returns the current transport frame"},
+  {"get_beat_infos",            get_beat_infos,                 METH_VARARGS, "get_beat_infos():\n  Returns the beat infos"},
   {"transport_locate",   transport_locate,        METH_VARARGS, "transport_locate(frame):\n  Sets the current transport frame"},
   {"get_transport_state",get_transport_state,     METH_VARARGS, "get_transport_state():\n  Returns the current transport state"},
   {"transport_stop",     transport_stop,          METH_VARARGS, "transport_stop():\n  Stopping transport"},
